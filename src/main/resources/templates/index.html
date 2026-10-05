@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Omni Bridge | Crisis response</title>
+  <link rel="stylesheet" th:href="@{/css/app.css}">
+</head>
+<body>
+<header class="topbar"><a class="brand" href="/">OMNI BRIDGE</a><a href="/staff/incidents">Staff sign in</a></header>
+<main class="hero">
+  <p class="eyebrow">Hospitality incident coordination</p>
+  <h1>Get the right people moving, faster.</h1>
+  <p class="lead">Report a problem at the venue or open the staff response board to coordinate updates.</p>
+  <section class="venue-section">
+    <div class="section-heading">
+      <div><p class="eyebrow">Guest reporting</p><h2>Choose your venue</h2></div>
+      <a class="button secondary" href="/staff/incidents">Staff response board</a>
+    </div>
+    <div class="venue-list" th:if="${!#lists.isEmpty(venues)}">
+      <a class="card venue-card" th:each="venue : ${venues}"
+         th:href="@{/report/{slug}(slug=${venue.slug})}">
+        <span class="venue-icon" aria-hidden="true">+</span>
+        <span><strong th:text="${venue.name}">Venue name</strong>
+          <small th:text="${venue.address}">Venue address</small></span>
+        <span class="venue-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+    <div class="card empty" th:if="${#lists.isEmpty(venues)}">
+      <h2>No venues configured yet</h2>
+      <p>A venue must be added to the database before guests can submit reports.</p>
+    </div>
+  </section>
+  <p class="safety-note">For immediate danger, contact local emergency services directly.</p>
+</main>
+</body>
+</html>
