@@ -1,5 +1,6 @@
-package com.CODEWITHRISHU.Omni_Bridge.model;
+package com.CODEWITHRISHU.Omni_Bridge.model.incident;
 
+import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;

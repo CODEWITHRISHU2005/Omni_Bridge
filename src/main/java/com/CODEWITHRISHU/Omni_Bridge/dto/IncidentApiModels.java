@@ -1,6 +1,7 @@
 package com.CODEWITHRISHU.Omni_Bridge.dto;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.*;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.*;
+import com.CODEWITHRISHU.Omni_Bridge.model.staff.Venue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;

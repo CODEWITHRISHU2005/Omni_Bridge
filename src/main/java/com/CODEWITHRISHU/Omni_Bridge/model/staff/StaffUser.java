@@ -1,5 +1,6 @@
-package com.CODEWITHRISHU.Omni_Bridge.model;
+package com.CODEWITHRISHU.Omni_Bridge.model.staff;
 
+import com.CODEWITHRISHU.Omni_Bridge.model.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,19 +33,18 @@ public class StaffUser implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    private StaffRole role;
+    private Role role;
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "venue_id", nullable = false)
     private Venue venue;
 
-    public StaffUser(String name, String email, String passwordHash,
-                     StaffRole role, Venue venue) {
-        this.name = name;
-        this.email = email;
-        this.passwordHash = passwordHash;
-        this.role = role;
-        this.venue = venue;
+    public StaffUser(StaffUser staffUser) {
+        this.name = staffUser.name;
+        this.email = staffUser.email;
+        this.passwordHash = staffUser.passwordHash;
+        this.role = staffUser.role;
+        this.venue = staffUser.venue;
     }
 
     @Override
@@ -62,8 +62,24 @@ public class StaffUser implements UserDetails {
         return passwordHash;
     }
 
-    @Override public boolean isAccountNonExpired() { return true; }
-    @Override public boolean isAccountNonLocked() { return true; }
-    @Override public boolean isCredentialsNonExpired() { return true; }
-    @Override public boolean isEnabled() { return true; }
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
+
 }

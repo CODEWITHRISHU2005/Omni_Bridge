@@ -1,7 +1,7 @@
 package com.CODEWITHRISHU.Omni_Bridge.repository;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.Incident;
-import com.CODEWITHRISHU.Omni_Bridge.model.IncidentStatus;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.Incident;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.IncidentStatus;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;

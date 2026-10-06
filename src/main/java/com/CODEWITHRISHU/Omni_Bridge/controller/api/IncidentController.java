@@ -1,8 +1,8 @@
 package com.CODEWITHRISHU.Omni_Bridge.controller.api;
 
 import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels.*;
-import com.CODEWITHRISHU.Omni_Bridge.model.Incident;
-import com.CODEWITHRISHU.Omni_Bridge.model.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.Incident;
+import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
 import com.CODEWITHRISHU.Omni_Bridge.service.IncidentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -14,10 +14,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api")
-public class IncidentApiController {
+public class IncidentController {
     private final IncidentService incidentService;
 
-    public IncidentApiController(IncidentService incidentService) {
+    public IncidentController(IncidentService incidentService) {
         this.incidentService = incidentService;
     }
 

@@ -1,7 +1,7 @@
 package com.CODEWITHRISHU.Omni_Bridge.service;
 
 import com.CODEWITHRISHU.Omni_Bridge.exception.VenueNotFoundException;
-import com.CODEWITHRISHU.Omni_Bridge.model.Venue;
+import com.CODEWITHRISHU.Omni_Bridge.model.staff.Venue;
 import com.CODEWITHRISHU.Omni_Bridge.repository.VenueRepository;
 
 import java.util.List;

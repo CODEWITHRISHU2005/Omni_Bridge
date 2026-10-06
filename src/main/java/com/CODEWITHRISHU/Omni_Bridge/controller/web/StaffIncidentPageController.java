@@ -1,8 +1,8 @@
 package com.CODEWITHRISHU.Omni_Bridge.controller.web;
 
 import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels.IncidentUpdateRequest;
-import com.CODEWITHRISHU.Omni_Bridge.model.IncidentStatus;
-import com.CODEWITHRISHU.Omni_Bridge.model.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.IncidentStatus;
+import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
 import com.CODEWITHRISHU.Omni_Bridge.service.IncidentService;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

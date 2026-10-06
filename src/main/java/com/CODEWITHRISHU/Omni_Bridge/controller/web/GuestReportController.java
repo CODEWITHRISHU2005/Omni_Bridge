@@ -1,10 +1,10 @@
 package com.CODEWITHRISHU.Omni_Bridge.controller.web;
 
 import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels.ReportRequest;
-import com.CODEWITHRISHU.Omni_Bridge.model.Incident;
-import com.CODEWITHRISHU.Omni_Bridge.model.IncidentType;
-import com.CODEWITHRISHU.Omni_Bridge.model.Severity;
-import com.CODEWITHRISHU.Omni_Bridge.model.Venue;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.Incident;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.IncidentType;
+import com.CODEWITHRISHU.Omni_Bridge.model.incident.Severity;
+import com.CODEWITHRISHU.Omni_Bridge.model.staff.Venue;
 import com.CODEWITHRISHU.Omni_Bridge.service.IncidentService;
 import com.CODEWITHRISHU.Omni_Bridge.service.VenueService;
 import jakarta.validation.Valid;

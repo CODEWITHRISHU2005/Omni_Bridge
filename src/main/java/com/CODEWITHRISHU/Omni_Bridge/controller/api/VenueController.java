@@ -11,10 +11,10 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/venues")
-public class VenueApiController {
+public class VenueController {
     private final VenueService venueService;
 
-    public VenueApiController(VenueService venueService) {
+    public VenueController(VenueService venueService) {
         this.venueService = venueService;
     }
 

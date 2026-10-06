@@ -1,6 +1,6 @@
 package com.CODEWITHRISHU.Omni_Bridge.repository;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 

@@ -1,7 +1,7 @@
 package com.CODEWITHRISHU.Omni_Bridge.model;
 
-public enum StaffRole {
+public enum Role {
     RESPONDER,
-    INCIDENT_LEAD,
+    STAFF,
     ADMIN
 }
