@@ -1,6 +1,6 @@
-package com.CODEWITHRISHU.Omni_Bridge.model;
+package com.CODEWITHRISHU.Omni_Bridge.entity;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.StaffUser;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +27,9 @@ public class OttToken {
 
     @Column(nullable = false)
     private Instant expiresAt;
+    @OneToOne
+    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
+    private StaffUser user;
 
     @PrePersist
     protected void onCreate() {
@@ -34,8 +37,4 @@ public class OttToken {
             createdAt = Instant.now();
         }
     }
-
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
-    private StaffUser user;
 }

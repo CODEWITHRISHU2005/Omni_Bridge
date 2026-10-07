@@ -1,14 +1,13 @@
 package com.CODEWITHRISHU.Omni_Bridge.dto;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.incident.*;
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.Venue;
+import com.CODEWITHRISHU.Omni_Bridge.entity.incident.*;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.Venue;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.Map;
 
 public final class IncidentApiModels {
     private IncidentApiModels() {}
@@ -87,17 +86,4 @@ public final class IncidentApiModels {
         }
     }
 
-    public record ApiError(
-            Instant timestamp,
-            int status,
-            String error,
-            String message,
-            String path,
-            Map<String, String> validationErrors) {
-        public ApiError {
-            validationErrors = validationErrors == null
-                    ? Map.of()
-                    : Map.copyOf(validationErrors);
-        }
-    }
 }

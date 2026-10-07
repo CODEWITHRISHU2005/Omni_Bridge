@@ -1,6 +1,6 @@
-package com.CODEWITHRISHU.Omni_Bridge.model.staff;
+package com.CODEWITHRISHU.Omni_Bridge.entity.staff;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.Role;
+import com.CODEWITHRISHU.Omni_Bridge.entity.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -39,13 +39,6 @@ public class StaffUser implements UserDetails {
     @JoinColumn(name = "venue_id", nullable = false)
     private Venue venue;
 
-    public StaffUser(StaffUser staffUser) {
-        this.name = staffUser.name;
-        this.email = staffUser.email;
-        this.passwordHash = staffUser.passwordHash;
-        this.role = staffUser.role;
-        this.venue = staffUser.venue;
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

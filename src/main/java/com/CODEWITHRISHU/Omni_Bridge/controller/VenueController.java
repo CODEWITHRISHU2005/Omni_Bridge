@@ -1,4 +1,4 @@
-package com.CODEWITHRISHU.Omni_Bridge.controller.api;
+package com.CODEWITHRISHU.Omni_Bridge.controller;
 
 import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels.VenueResponse;
 import com.CODEWITHRISHU.Omni_Bridge.service.VenueService;
@@ -29,4 +29,5 @@ public class VenueController {
     public VenueResponse getVenue(@PathVariable String slug) {
         return VenueResponse.from(venueService.getBySlug(slug));
     }
+
 }

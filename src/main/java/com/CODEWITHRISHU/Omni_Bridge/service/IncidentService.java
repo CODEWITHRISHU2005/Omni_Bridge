@@ -1,15 +1,15 @@
 package com.CODEWITHRISHU.Omni_Bridge.service;
 
+import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels;
 import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels.IncidentUpdateRequest;
 import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels.ReportRequest;
 import com.CODEWITHRISHU.Omni_Bridge.exception.IncidentNotFoundException;
 import com.CODEWITHRISHU.Omni_Bridge.exception.InvalidIncidentTransitionException;
 import com.CODEWITHRISHU.Omni_Bridge.exception.VenueNotFoundException;
-import com.CODEWITHRISHU.Omni_Bridge.model.incident.Incident;
-import com.CODEWITHRISHU.Omni_Bridge.model.incident.IncidentStatus;
-import com.CODEWITHRISHU.Omni_Bridge.model.incident.IncidentUpdate;
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.Venue;
+import com.CODEWITHRISHU.Omni_Bridge.entity.incident.Incident;
+import com.CODEWITHRISHU.Omni_Bridge.entity.incident.IncidentStatus;
+import com.CODEWITHRISHU.Omni_Bridge.entity.incident.IncidentUpdate;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.StaffUser;
 import com.CODEWITHRISHU.Omni_Bridge.repository.IncidentRepository;
 import com.CODEWITHRISHU.Omni_Bridge.repository.IncidentUpdateRepository;
 import com.CODEWITHRISHU.Omni_Bridge.repository.VenueRepository;
@@ -30,43 +30,37 @@ public class IncidentService {
     private final VenueRepository venueRepository;
 
     @Transactional
-    public Incident createReport(String venueSlug, ReportRequest request) {
-        Venue venue = venueRepository.findBySlug(venueSlug)
+    public IncidentApiModels.IncidentCreatedResponse createReport(String venueSlug, ReportRequest request) {
+        var venue = venueRepository.findBySlug(venueSlug)
                 .orElseThrow(() -> new VenueNotFoundException(venueSlug));
 
-        Incident incident = new Incident(
+        var incident = incidentRepository.save(new Incident(
                 venue,
                 request.type(),
                 request.severity(),
                 request.description().trim(),
                 request.location().trim(),
                 clean(request.reporterName()),
-                clean(request.reporterPhone()));
+                clean(request.reporterPhone())));
+        record(incident, null, "Report submitted by guest.");
 
-        incident = incidentRepository.save(incident);
-        updateRepository.save(new IncidentUpdate(
-                incident, null, "Report submitted by guest."));
-
-        return incident;
+        return new IncidentApiModels.IncidentCreatedResponse(incident.getId(), incident.getStatus());
     }
 
     @Transactional(readOnly = true)
-    public List<Incident> listOpenIncidents(StaffUser staff) {
-        return incidentRepository.findOpenForVenue(
-                staff.getVenue().getId(), HIDDEN_FROM_OPEN_BOARD);
+    public List<IncidentApiModels.IncidentResponse> listOpenIncidents(StaffUser staff) {
+        return incidentRepository.findOpenForVenue(venueIdOf(staff), HIDDEN_FROM_OPEN_BOARD).stream()
+                .map(IncidentApiModels.IncidentResponse::from)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public Incident getForStaff(Long incidentId, StaffUser staff) {
-        return incidentRepository
-                .findByIdAndVenueId(incidentId, staff.getVenue().getId())
-                .orElseThrow(() -> new IncidentNotFoundException(incidentId));
-    }
-
-    @Transactional(readOnly = true)
-    public List<IncidentUpdate> getTimeline(Long incidentId, StaffUser staff) {
-        Incident incident = getForStaff(incidentId, staff);
-        return updateRepository.findByIncidentIdOrderByCreatedAtAsc(incident.getId());
+    public IncidentApiModels.IncidentDetailResponse getDetail(Long incidentId, StaffUser staff) {
+        var incident = findOwned(incidentId, staff);
+        var timeline = updateRepository.findTimeline(incident.getId()).stream()
+                .map(IncidentApiModels.IncidentUpdateResponse::from)
+                .toList();
+        return new IncidentApiModels.IncidentDetailResponse(IncidentApiModels.IncidentResponse.from(incident), timeline);
     }
 
     @Transactional
@@ -76,56 +70,44 @@ public class IncidentService {
 
     @Transactional
     public void assignToSelf(Long incidentId, StaffUser staff) {
-        Incident incident = getForStaff(incidentId, staff);
+        var incident = findOwned(incidentId, staff);
         incident.setAssignedTo(staff);
-        incidentRepository.save(incident);
-        updateRepository.save(new IncidentUpdate(
-                incident, staff, "Assigned to " + staff.getName() + "."));
+        record(incident, staff, "Assigned to " + staff.getName() + ".");
     }
 
     @Transactional
-    public void addUpdate(
-            Long incidentId, IncidentUpdateRequest request, StaffUser staff) {
-        Incident incident = getForStaff(incidentId, staff);
-        updateRepository.save(new IncidentUpdate(
-                incident, staff, request.message().trim()));
+    public void addUpdate(Long incidentId, IncidentUpdateRequest request, StaffUser staff) {
+        record(findOwned(incidentId, staff), staff, request.message().trim());
     }
 
     @Transactional
-    public void changeStatus(
-            Long incidentId, IncidentStatus next, StaffUser staff) {
-        Incident incident = getForStaff(incidentId, staff);
-        IncidentStatus previous = incident.getStatus();
+    public void changeStatus(Long incidentId, IncidentStatus next, StaffUser staff) {
+        var incident = findOwned(incidentId, staff);
+        var previous = incident.getStatus();
 
-        validateTransition(previous, next);
+        if (!previous.canMoveTo(next)) {
+            throw new InvalidIncidentTransitionException(previous, next);
+        }
 
         incident.setStatus(next);
-        incidentRepository.save(incident);
-        updateRepository.save(new IncidentUpdate(
-                incident, staff,
-                "Status changed from " + previous + " to " + next + "."));
+        record(incident, staff, "Status changed from " + previous + " to " + next + ".");
     }
 
-    private void validateTransition(
-            IncidentStatus current, IncidentStatus next) {
-        boolean allowed = switch (current) {
-            case REPORTED -> next == IncidentStatus.ACKNOWLEDGED
-                    || next == IncidentStatus.DUPLICATE;
-            case ACKNOWLEDGED -> next == IncidentStatus.RESPONDING
-                    || next == IncidentStatus.DUPLICATE;
-            case RESPONDING -> next == IncidentStatus.RESOLVED
-                    || next == IncidentStatus.DUPLICATE;
-            case RESOLVED -> next == IncidentStatus.CLOSED
-                    || next == IncidentStatus.RESPONDING;
-            case CLOSED, DUPLICATE -> false;
-        };
+    private Incident findOwned(Long incidentId, StaffUser staff) {
+        return incidentRepository.findByIdAndVenueId(incidentId, venueIdOf(staff))
+                .orElseThrow(() -> new IncidentNotFoundException(incidentId));
+    }
 
-        if (!allowed) {
-            throw new InvalidIncidentTransitionException(current, next);
-        }
+    private void record(Incident incident, StaffUser author, String message) {
+        updateRepository.save(new IncidentUpdate(incident, author, message));
+    }
+
+    private Long venueIdOf(StaffUser staff) {
+        return staff.getVenue().getId();
     }
 
     private String clean(String value) {
         return value == null || value.isBlank() ? null : value.trim();
     }
+
 }

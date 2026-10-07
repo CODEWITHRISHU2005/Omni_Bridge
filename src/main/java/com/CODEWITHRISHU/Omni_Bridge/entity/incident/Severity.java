@@ -1,4 +1,4 @@
-package com.CODEWITHRISHU.Omni_Bridge.model.incident;
+package com.CODEWITHRISHU.Omni_Bridge.entity.incident;
 
 public enum Severity {
     LOW,

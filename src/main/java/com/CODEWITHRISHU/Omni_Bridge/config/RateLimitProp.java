@@ -1,17 +1,14 @@
 package com.CODEWITHRISHU.Omni_Bridge.config;
 
-import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.stereotype.Component;
+import org.springframework.boot.context.properties.bind.DefaultValue;
 
-@Data
-@Component
 @ConfigurationProperties(prefix = "rate-limit")
-public class RateLimitProp {
-    private int login;
-    private int register;
-    private int otp;
-    private int ott;
-    private int video;
-    private int duration;
+public record RateLimitProp(
+        @DefaultValue("3") int register,
+        @DefaultValue("20") int auth,
+        @DefaultValue("5") int otp,
+        @DefaultValue("5") int ott,
+        @DefaultValue("60") int report,
+        @DefaultValue("1") int duration) {
 }

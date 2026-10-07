@@ -1,6 +1,6 @@
 package com.CODEWITHRISHU.Omni_Bridge.exception;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.incident.IncidentStatus;
+import com.CODEWITHRISHU.Omni_Bridge.entity.incident.IncidentStatus;
 
 public class InvalidIncidentTransitionException extends RuntimeException {
     public InvalidIncidentTransitionException(

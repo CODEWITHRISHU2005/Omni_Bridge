@@ -1,7 +1,7 @@
-package com.CODEWITHRISHU.Omni_Bridge.model.incident;
+package com.CODEWITHRISHU.Omni_Bridge.entity.incident;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.Venue;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.Venue;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,7 +21,7 @@ public class Incident {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @ManyToOne(optional = false)
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "venue_id", nullable = false)
     private Venue venue;
 
@@ -49,9 +49,12 @@ public class Incident {
     @Column(nullable = false, length = 30)
     private IncidentStatus status = IncidentStatus.REPORTED;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to_id")
     private StaffUser assignedTo;
+
+    @Version
+    private Long version;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -83,4 +86,5 @@ public class Incident {
     void onUpdate() {
         updatedAt = Instant.now();
     }
+
 }

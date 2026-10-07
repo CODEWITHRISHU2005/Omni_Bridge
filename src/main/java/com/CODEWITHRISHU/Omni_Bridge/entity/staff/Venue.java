@@ -1,4 +1,4 @@
-package com.CODEWITHRISHU.Omni_Bridge.model.staff;
+package com.CODEWITHRISHU.Omni_Bridge.entity.staff;
 
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;

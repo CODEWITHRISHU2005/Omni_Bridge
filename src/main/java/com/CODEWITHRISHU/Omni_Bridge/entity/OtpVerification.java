@@ -1,6 +1,6 @@
-package com.CODEWITHRISHU.Omni_Bridge.model;
+package com.CODEWITHRISHU.Omni_Bridge.entity;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.StaffUser;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +27,9 @@ public class OtpVerification {
     @Column(name = "verified")
     private boolean verified;
 
+    @Column(nullable = false)
+    private int attempts;
+
     @OneToOne
     @JoinColumn(name = "user_id", referencedColumnName = "id", unique = true)
     private StaffUser user;
@@ -41,5 +44,4 @@ public class OtpVerification {
     protected void onCreate() {
         createdAt = Instant.now();
     }
-
 }

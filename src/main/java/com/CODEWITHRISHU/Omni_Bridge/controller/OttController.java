@@ -1,4 +1,4 @@
-package com.CODEWITHRISHU.Omni_Bridge.controller.api;
+package com.CODEWITHRISHU.Omni_Bridge.controller;
 
 import com.CODEWITHRISHU.Omni_Bridge.dto.response.JwtResponse;
 import com.CODEWITHRISHU.Omni_Bridge.service.OttService;
@@ -23,8 +23,7 @@ public class OttController {
 
     @PostMapping("/login")
     public ResponseEntity<JwtResponse> loginWithOtt(@RequestParam String token) {
-        JwtResponse response = ottService.loginWithOttToken(token);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ottService.loginWithOttToken(token));
     }
 
 }

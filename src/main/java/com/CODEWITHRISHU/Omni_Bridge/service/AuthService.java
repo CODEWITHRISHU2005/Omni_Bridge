@@ -1,11 +1,21 @@
 package com.CODEWITHRISHU.Omni_Bridge.service;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.dto.request.SignUpRequest;
+import com.CODEWITHRISHU.Omni_Bridge.exception.UserAlreadyExists;
+import com.CODEWITHRISHU.Omni_Bridge.exception.VenueNotFoundException;
+import com.CODEWITHRISHU.Omni_Bridge.entity.Role;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.StaffUser;
 import com.CODEWITHRISHU.Omni_Bridge.repository.StaffUserRepository;
+import com.CODEWITHRISHU.Omni_Bridge.repository.VenueRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 
 @Service
 @Slf4j
@@ -13,33 +23,38 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final StaffUserRepository repository;
+    private final VenueRepository venueRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public void register(StaffUser userInfo) {
-        log.info("Attempting to register user: {}", userInfo.getEmail());
+    @Value("${app.admin-key:}")
+    private String adminKey;
 
-        repository.findByEmail(userInfo.getEmail())
-                .ifPresent(u -> {
-                    throw new UserAlreadyExists("User already exists with email: " + userInfo.getEmail());
-                });
+    @Transactional
+    public StaffUser register(SignUpRequest request) {
+        String email = request.email().trim().toLowerCase();
+        if (repository.findByEmailIgnoreCase(email).isPresent()) {
+            throw new UserAlreadyExists("User already exists with email: " + email);
+        }
 
-        repository.save(prepareUser(userInfo));
+        var venue = venueRepository.findBySlug(request.venueSlug())
+                .orElseThrow(() -> new VenueNotFoundException(request.venueSlug()));
 
-        log.info("User '{}' added successfully", userInfo.getEmail());
+        var user = new StaffUser();
+        user.setName(request.name().trim());
+        user.setEmail(email);
+        user.setPasswordHash(passwordEncoder.encode(request.password()));
+        user.setRole(resolveRole(request.adminKey()));
+        user.setVenue(venue);
+
+        log.info("Registered user id pending, role={}", user.getRole());
+        return repository.save(user);
     }
 
-    private StaffUser prepareUser(StaffUser user) {
-        user.setPassword(passwordEncoder.encode(user.getPassword()));
-
-        Role assignedRole = Optional.ofNullable(user.getAdminKey())
-                .filter(key -> key.equals("Rishabh@2005"))
-                .map(key -> Role.ADMIN)
-                .orElse(Role.USER);
-
-        user.setRoles(Set.of(assignedRole));
-        user.setAdminKey(null);
-
-        log.info("User '{}' assigned role: {}", user.getEmail(), assignedRole);
-        return user;
+    private Role resolveRole(String providedKey) {
+        boolean isAdmin = !adminKey.isBlank() && providedKey != null
+                && MessageDigest.isEqual(providedKey.getBytes(StandardCharsets.UTF_8),
+                adminKey.getBytes(StandardCharsets.UTF_8));
+        return isAdmin ? Role.ADMIN : Role.STAFF;
     }
+
 }

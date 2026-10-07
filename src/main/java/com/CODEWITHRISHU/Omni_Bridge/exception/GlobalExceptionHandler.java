@@ -1,12 +1,15 @@
 package com.CODEWITHRISHU.Omni_Bridge.exception;
 
-import com.CODEWITHRISHU.Omni_Bridge.dto.IncidentApiModels.ApiError;
+import com.CODEWITHRISHU.Omni_Bridge.dto.response.ErrorResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,6 +19,7 @@ import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -23,7 +27,7 @@ public class GlobalExceptionHandler {
             IncidentNotFoundException.class,
             VenueNotFoundException.class
     })
-    public ResponseEntity<ApiError> handleNotFound(
+    public ResponseEntity<ErrorResponse> handleNotFound(
             RuntimeException exception,
             HttpServletRequest request) {
         return error(
@@ -35,7 +39,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(InvalidIncidentTransitionException.class)
-    public ResponseEntity<ApiError> handleInvalidTransition(
+    public ResponseEntity<ErrorResponse> handleInvalidTransition(
             InvalidIncidentTransitionException exception,
             HttpServletRequest request) {
         return error(
@@ -47,7 +51,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ApiError> handleValidation(
+    public ResponseEntity<ErrorResponse> handleValidation(
             MethodArgumentNotValidException exception,
             HttpServletRequest request) {
         Map<String, String> validationErrors = new LinkedHashMap<>();
@@ -65,7 +69,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ApiError> handleConstraintViolation(
+    public ResponseEntity<ErrorResponse> handleConstraintViolation(
             ConstraintViolationException exception,
             HttpServletRequest request) {
         Map<String, String> validationErrors = new LinkedHashMap<>();
@@ -83,7 +87,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> handleMalformedJson(
+    public ResponseEntity<ErrorResponse> handleMalformedJson(
             HttpMessageNotReadableException exception,
             HttpServletRequest request) {
         return error(
@@ -95,7 +99,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiError> handleBadRequest(
+    public ResponseEntity<ErrorResponse> handleBadRequest(
             IllegalArgumentException exception,
             HttpServletRequest request) {
         return error(
@@ -106,10 +110,40 @@ public class GlobalExceptionHandler {
                 Map.of());
     }
 
+    @ExceptionHandler(InvalidRefreshTokenException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidRefreshToken(
+            InvalidRefreshTokenException exception,
+            HttpServletRequest request) {
+        return error(HttpStatus.UNAUTHORIZED, "Unauthorized", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(UserAlreadyExists.class)
+    public ResponseEntity<ErrorResponse> handleUserExists(
+            UserAlreadyExists exception,
+            HttpServletRequest request) {
+        return error(HttpStatus.CONFLICT, "Conflict", exception.getMessage(), request, Map.of());
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleConcurrentEdit(
+            ObjectOptimisticLockingFailureException exception,
+            HttpServletRequest request) {
+        return error(HttpStatus.CONFLICT, "Concurrent Update",
+                "Someone else just changed this incident. Refresh and try again.", request, Map.of());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(
+            AccessDeniedException exception,
+            HttpServletRequest request) {
+        return error(HttpStatus.FORBIDDEN, "Forbidden", "You do not have access to this resource.", request, Map.of());
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleUnexpected(
+    public ResponseEntity<ErrorResponse> handleUnexpected(
             Exception exception,
             HttpServletRequest request) {
+        log.error("Unhandled exception on {}", request.getRequestURI(), exception); // was swallowed silently
         return error(
                 HttpStatus.INTERNAL_SERVER_ERROR,
                 "Internal Server Error",
@@ -118,13 +152,13 @@ public class GlobalExceptionHandler {
                 Map.of());
     }
 
-    private ResponseEntity<ApiError> error(
+    private ResponseEntity<ErrorResponse> error(
             HttpStatus status,
             String title,
             String message,
             HttpServletRequest request,
             Map<String, String> validationErrors) {
-        ApiError body = new ApiError(
+        ErrorResponse body = new ErrorResponse(
                 Instant.now(),
                 status.value(),
                 title,

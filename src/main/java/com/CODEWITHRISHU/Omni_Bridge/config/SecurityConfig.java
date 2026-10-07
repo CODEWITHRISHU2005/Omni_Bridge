@@ -5,9 +5,9 @@ import com.CODEWITHRISHU.Omni_Bridge.handler.MagicLinkOttGenerationSuccessHandle
 import com.CODEWITHRISHU.Omni_Bridge.handler.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -41,14 +41,16 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final ObjectMapper JSON = new ObjectMapper();
     private final UserDetailsService userDetailsService;
     private final RateLimitFilter rateLimitFilter;
-
     @Value("${app.frontend.url}")
     private String frontendUrl;
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http,
+                                                   JwtAuthFilter jwtAuthFilter,
+                                                   MagicLinkOttGenerationSuccessHandler magicLinkHandler) throws Exception {
         AuthorizationManager<RequestAuthorizationContext> mfa =
                 AuthorizationManagers.allOf(
                         AuthorityAuthorizationManager.hasAuthority("OTP_AUTHORITY"),
@@ -59,6 +61,8 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(
+                                "/api/report/**",
+                                "/api/venues/**",
                                 "/api/auth/**",
                                 "/api/ott/**",
                                 "/api/otp/**",
@@ -72,16 +76,15 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .logout(AbstractHttpConfigurer::disable)
                 .oneTimeTokenLogin(ott -> ott
-                        .tokenGenerationSuccessHandler(oneTimeTokenGenerationSuccessHandler())
+                        .tokenGenerationSuccessHandler(magicLinkHandler)
                         .permitAll())
                 .exceptionHandling(eh -> eh.authenticationEntryPoint((req, resp, e) -> {
-                    e.printStackTrace();
                     resp.setStatus(401);
                     resp.setContentType("application/json");
 
                     String message = (String) req.getAttribute("exception");
 
-                    ObjectMapper om = new ObjectMapper();
+                    ObjectMapper om = JSON;
 
                     if (message != null && message.trim().equals("token_expired")) {
                         resp.getWriter().println(om.writeValueAsString(Map.of("message", "token_expired")));
@@ -94,6 +97,20 @@ public class SecurityConfig {
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(rateLimitFilter, JwtAuthFilter.class);
         return http.build();
+    }
+
+    @Bean
+    public FilterRegistrationBean<JwtAuthFilter> jwtFilterRegistration(JwtAuthFilter filter) {
+        FilterRegistrationBean<JwtAuthFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
+    }
+
+    @Bean
+    public FilterRegistrationBean<RateLimitFilter> rateLimitFilterRegistration(RateLimitFilter filter) {
+        FilterRegistrationBean<RateLimitFilter> registration = new FilterRegistrationBean<>(filter);
+        registration.setEnabled(false);
+        return registration;
     }
 
     @Bean
@@ -111,11 +128,6 @@ public class SecurityConfig {
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
         return authConfig.getAuthenticationManager();
-    }
-
-    @Bean
-    public MagicLinkOttGenerationSuccessHandler oneTimeTokenGenerationSuccessHandler() {
-        return new MagicLinkOttGenerationSuccessHandler();
     }
 
     @Bean

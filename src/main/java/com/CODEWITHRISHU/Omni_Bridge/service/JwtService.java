@@ -1,6 +1,6 @@
 package com.CODEWITHRISHU.Omni_Bridge.service;
 
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.StaffUser;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.StaffUser;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
@@ -12,57 +12,35 @@ import org.springframework.stereotype.Service;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
 
 @Slf4j
 @Service
 public class JwtService {
 
-    @Value("${jwt.secret}")
-    private String secret;
+    public static final String OTP_FACTOR = "OTP_AUTHORITY";
+    private static final String CLAIM_FACTORS = "authorities";
 
-    @Value("${jwt.expiration-ms:1296000000}")
-    private long jwtExpirationMs;
+    private final SecretKey signingKey;
+    private final long expirationMs;
 
-    public String extractUsername(String token) {
-        log.debug("Extracting username from token");
-        return extractClaim(token, Claims::getSubject);
+    public JwtService(@Value("${jwt.secret}") String secret,
+                      @Value("${jwt.expiration-ms}") long expirationMs) {
+        this.signingKey = Keys.hmacShaKeyFor(Decoders.BASE64.decode(secret));
+        this.expirationMs = expirationMs;
     }
 
-    public Date extractExpiration(String token) {
-        log.debug("Extracting expiration from token");
-        return extractClaim(token, Claims::getExpiration);
+    public Claims parse(String token) {
+        return Jwts.parser().verifyWith(signingKey).build().parseSignedClaims(token).getPayload();
     }
 
-    public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
-        final Claims claims = extractAllClaims(token);
-        return claimsResolver.apply(claims);
+    public boolean belongsTo(Claims claims, UserDetails user) {
+        return user.getUsername().equalsIgnoreCase(claims.getSubject());
     }
 
-    private Claims extractAllClaims(String token) {
-        log.debug("Extracting all claims from token");
-        return Jwts
-                .parser()
-                .verifyWith(getSignKey())
-                .build()
-                .parseSignedClaims(token)
-                .getPayload();
-    }
-
-    private Boolean isTokenExpired(String token) {
-        boolean expired = extractExpiration(token).before(new Date());
-        log.debug("Token expired: {}", expired);
-        return expired;
-    }
-
-    public Boolean validateToken(String token, UserDetails userDetails) {
-        final String username = extractUsername(token);
-        boolean valid = (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
-        log.info("Validating token for user '{}': {}", username, valid);
-        return valid;
+    public List<String> factors(Claims claims) {
+        List<?> raw = claims.get(CLAIM_FACTORS, List.class);
+        return raw == null ? List.of() : raw.stream().map(String::valueOf).toList();
     }
 
     public String generateToken(StaffUser user) {
@@ -70,39 +48,17 @@ public class JwtService {
     }
 
     public String generateMfaToken(StaffUser user, List<String> factors) {
-        Map<String, Object> claims = new HashMap<>();
-        claims.put("userId", user.getId());
-        claims.put("name", user.getName());
-        claims.put("email", user.getEmail());
-        claims.put("authorities", factors);
-
-        String token = createToken(claims, user.getEmail());
-
-        log.info("Generated JWT for user '{}', expires at {}",
-                user.getEmail(), extractExpiration(token));
-
-        return token;
-    }
-
-    public List<String> extractFactorClaims(String token) {
-        List<String> factors = extractClaim(token, claims -> claims.get("authorities", List.class));
-        return factors == null ? List.of() : factors;
-    }
-
-    private String createToken(Map<String, Object> claims, String email) {
-        log.debug("Creating token for user '{}'", email);
+        var now = new Date();
         return Jwts.builder()
-                .claims(claims)
-                .subject(email)
-                .issuedAt(new Date(System.currentTimeMillis()))
-                .expiration(new Date(System.currentTimeMillis() + jwtExpirationMs))
-                .signWith(getSignKey())
+                .subject(user.getEmail())
+                .claim("userId", user.getId())
+                .claim("name", user.getName())
+                .claim("email", user.getEmail())
+                .claim(CLAIM_FACTORS, factors)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + expirationMs))
+                .signWith(signingKey)
                 .compact();
     }
 
-    private SecretKey getSignKey() {
-        log.debug("Getting signing key");
-        byte[] keyBytes = Decoders.BASE64.decode(secret);
-        return Keys.hmacShaKeyFor(keyBytes);
-    }
 }

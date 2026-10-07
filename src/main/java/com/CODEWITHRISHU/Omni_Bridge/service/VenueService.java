@@ -1,13 +1,12 @@
 package com.CODEWITHRISHU.Omni_Bridge.service;
 
 import com.CODEWITHRISHU.Omni_Bridge.exception.VenueNotFoundException;
-import com.CODEWITHRISHU.Omni_Bridge.model.staff.Venue;
+import com.CODEWITHRISHU.Omni_Bridge.entity.staff.Venue;
 import com.CODEWITHRISHU.Omni_Bridge.repository.VenueRepository;
-
-import java.util.List;
-
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @Transactional(readOnly = true)

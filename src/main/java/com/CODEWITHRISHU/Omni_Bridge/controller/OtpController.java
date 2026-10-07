@@ -1,4 +1,4 @@
-package com.CODEWITHRISHU.Omni_Bridge.controller.api;
+package com.CODEWITHRISHU.Omni_Bridge.controller;
 
 import com.CODEWITHRISHU.Omni_Bridge.dto.request.OtpRequest;
 import com.CODEWITHRISHU.Omni_Bridge.dto.response.OtpResponse;
@@ -17,28 +17,24 @@ import org.springframework.web.bind.annotation.RestController;
 @Slf4j
 @RequiredArgsConstructor
 public class OtpController {
-
     private final OtpService otpService;
 
     @PostMapping("/send")
     public ResponseEntity<OtpResponse> sendOtp(@Valid @RequestBody OtpRequest request) {
         log.info("Sending OTP to phone");
-        OtpResponse response = otpService.sendOtp(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(otpService.sendOtp(request));
     }
 
     @PostMapping("/verify")
     public ResponseEntity<OtpResponse> verifyOtp(@Valid @RequestBody OtpRequest request) {
         log.info("Verifying OTP");
-        OtpResponse response = otpService.verifyOtp(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(otpService.verifyOtp(request));
     }
 
     @PostMapping("/resend")
     public ResponseEntity<OtpResponse> resendOtp(@Valid @RequestBody OtpRequest request) {
         log.info("Resending OTP");
-        OtpResponse response = otpService.resendOtp(request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(otpService.resendOtp(request));
     }
 
 }

@@ -1,4 +1,4 @@
-package com.CODEWITHRISHU.Omni_Bridge.model;
+package com.CODEWITHRISHU.Omni_Bridge.entity;
 
 public enum Role {
     RESPONDER,
